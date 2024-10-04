@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Oct  2 12:26:14 2024
-
-@author: erika
-"""
 
 import pandas as pd
 from yaml import safe_load
