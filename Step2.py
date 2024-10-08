@@ -24,7 +24,7 @@ plt.scatter(outdoor_temp_values,cop_values)
 delta_t = [60 - value for value in outdoor_temp_values]
 inverse_array = [1 / x for x in delta_t]
 
-print(delta_t)
+#print(delta_t)
 
 #print(inverse_array)
 
@@ -36,13 +36,16 @@ np_cop_values = np.array(cop_values)
 
 
 
-slope, intercept = np.polyfit(cop_values, inverse_array, 1)
+slope, intercept = np.polyfit(inverse_array , cop_values, 1)
 
-line_of_best_fit = slope * np_cop_values + intercept
+line_of_best_fit = slope * np_inverse_array + intercept
 
-plt.scatter(cop_values, inverse_array)
+plt.scatter(inverse_array , cop_values)
 
-plt.plot(cop_values,line_of_best_fit)
+plt.plot(inverse_array,line_of_best_fit)
+
+print("b =" ,slope)
+print("a =" , intercept)
 
 print(slope)
 print(intercept)
