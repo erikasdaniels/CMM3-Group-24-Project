@@ -1,10 +1,15 @@
 import yaml
 import matplotlib.pyplot as plt
 import numpy as np
+import requests
 
 # Load the YAML file
-with open(r"C:\Users\chxrl\Documents\1. UNIVERSITY\Year 3\1. Computational Methods\Group Project\heat_pump_cop_synthetic_full.yaml", 'r') as file:
-    data = yaml.safe_load(file)
+heat_pump_cop_file = "https://raw.githubusercontent.com/erikasdaniels/CMM3-Group-24-Project/refs/heads/main/heat_pump_cop_synthetic_full.yaml"
+ 
+response = requests.get(heat_pump_cop_file)
+ 
+if response.status_code == 200:
+        data = yaml.safe_load(response.text)
 
 # Extract COP_noisy and outdoor_temp_C into arrays
 cop_values = [entry['COP_noisy'] for entry in data['heat_pump_cop_data']]
