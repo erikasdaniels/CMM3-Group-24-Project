@@ -1,19 +1,13 @@
+import yaml
 
-import pandas as pd
-from yaml import safe_load
-import matplotlib.pyplot as plt
+# Load the YAML file
+with open(r"C:\Users\erika\Documents\Engineering\Computational Methods and Modeling Material\Project\Downloads\heat_pump_cop_synthetic_full.yaml", 'r') as file:
+    data = yaml.safe_load(file)
 
-# Load YAML file into a DataFrame
-with open('C:/Users/erika/Documents/Engineering/Computational Methods and Modeling Material/Project/Downloads/heat_pump_cop_synthetic_full.yaml', 'r') as f:
-    data = safe_load(f)  # Load the YAML file as a dictionary
+# Extract COP_noisy and outdoor_temp_C into arrays
+cop_values = [entry['COP_noisy'] for entry in data['heat_pump_cop_data']]
+outdoor_temp_values = [entry['outdoor_temp_C'] for entry in data['heat_pump_cop_data']]
 
-# Check the structure of the loaded data
-print("Loaded Data:", data)
-
-# Normalize the YAML data into a DataFrame
-df = pd.json_normalize(data)
-
-# Print the DataFrame to inspect its structure
-print("DataFrame Structure:\n", df)
-
-plt.plot('COP_noisy','outdoor_temp_C')
+# Now cop_values and outdoor_temp_values are Python lists (arrays)
+print("COP values:", cop_values)
+print("Outdoor temperatures:", outdoor_temp_values)
