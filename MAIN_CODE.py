@@ -1,17 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Oct  9 11:41:56 2024
-
-@author: chxrl
-"""
-
-from datetime import datetime
-from meteostat import Point, Hourly
-import numpy as np
-import yaml
-import matplotlib.pyplot as plt
-import requests
-
 
 
 # Define the location (Edinburgh: 55.9533° N, 3.1883° W)
@@ -24,6 +10,15 @@ end = datetime(2023, 1, 2, 0) # End time (24-hour period)
 # Fetch hourly temperature data
 data = Hourly(location,start,end)
 data = data.fetch()
+data = data.reset_index()
+
+t_ambient = []
+hours = data["time"].dt.hour
+
+for i in range(0,25):
+    t = data["temp"].iloc[i] + 273 
+    t_ambient.append(t)
+    
 
 print("")
 print("Here we can see the data that we've extracted from the meteostat library in the time period 1st Jan to 2nd Jan 2023:")
@@ -64,6 +59,7 @@ slope, intercept = np.polyfit(inverse_array , cop_values, 1)
 
 line_of_best_fit = slope * np_inverse_array + intercept
 
+plt.figure(1)
 plt.scatter(inverse_array , cop_values, marker = "x")
 
 plt.plot(inverse_array,line_of_best_fit, "r")
@@ -100,4 +96,17 @@ initial_tank_temperature = data_inputs['initial_conditions']['initial_tank_tempe
 
 time_points = data_inputs['simulation_parameters']['time_points']['value']
 total_time_seconds = data_inputs['simulation_parameters']['total_time_seconds']['value']
+
+
+delta_t_ambient = [indoor_setpoint_temperature - temp for temp in t_ambient]
+
+
+q_load = [((wall_area * wall_U_value * t) + (roof_area * roof_U_value * t)) for t in delta_t_ambient]
+
+plt.figure(2)
+plt.plot(t_ambient,q_load )
+plt.title("Plot of Q_Load against Ambient Temperature")
+plt.xlabel("Outside Ambient Temperature (K)")
+plt.ylabel("Q_Load (W)")
+
 
