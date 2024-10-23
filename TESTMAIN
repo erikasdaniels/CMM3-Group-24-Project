@@ -10,7 +10,6 @@ STEP 1 BEGINS HERE
 '''
 from datetime import datetime
 from meteostat import Point, Hourly
-from scipy.integrate import solve_ivp
 import numpy as np
 import yaml
 import matplotlib.pyplot as plt
@@ -103,7 +102,7 @@ roof_area = data_inputs['building_properties']['roof_area']['value']
 wall_U_value = data_inputs['building_properties']['wall_U_value']['value']
 wall_area = data_inputs['building_properties']['wall_area']['value']
 
-fixed_condenser_temperature = 333
+fixed_condenser_temperature = data_inputs['heat_pump']['fixed_condenser_temperature_K']['value']
 heat_transfer_area = data_inputs['heat_pump']['heat_transfer_area']['value']
 off_temperature_threshold = data_inputs['heat_pump']['off_temperature_threshold_K']['value']
 on_temperature_threshold = data_inputs['heat_pump']['on_temperature_threshold_K']['value']
@@ -204,7 +203,8 @@ STEP 5 BEGINS HERE
 '''
 
 tank_surface_area = 2
-t_tank_list = []
+
+
 # Define the ODE for tank temperature (unchanged)
 def tank_temperature_ode(t, y, heat_pump_status):
     t_tank = y[0]  # Unpack the tank temperature from the state vector
@@ -279,5 +279,4 @@ plt.title('Heat Pump Status Over Time')
 plt.grid(True)
 plt.legend()
 plt.show()
-
 
