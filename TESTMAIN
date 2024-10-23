@@ -103,7 +103,7 @@ roof_area = data_inputs['building_properties']['roof_area']['value']
 wall_U_value = data_inputs['building_properties']['wall_U_value']['value']
 wall_area = data_inputs['building_properties']['wall_area']['value']
 
-fixed_condenser_temperature = 350
+fixed_condenser_temperature = 333
 heat_transfer_area = data_inputs['heat_pump']['heat_transfer_area']['value']
 off_temperature_threshold = data_inputs['heat_pump']['off_temperature_threshold_K']['value']
 on_temperature_threshold = data_inputs['heat_pump']['on_temperature_threshold_K']['value']
@@ -203,8 +203,9 @@ STEP 5 BEGINS HERE
 -----------------------------------------------------------------------------------------------------------------------------------
 '''
 
-tank_surface_area = 2.4
-# Define the ODE for tank temperature
+tank_surface_area = 2
+t_tank_list = []
+# Define the ODE for tank temperature (unchanged)
 def tank_temperature_ode(t, y, heat_pump_status):
     t_tank = y[0]  # Unpack the tank temperature from the state vector
     
@@ -221,53 +222,62 @@ def tank_temperature_ode(t, y, heat_pump_status):
     Q_loss = heat_loss_coefficient * tank_surface_area * (t_tank - t_ambient_current)
     
     # Calculate the rate of temperature change (dT/dt)
-    dT_tank_dt = (Q_transfer + Q_load_current - Q_loss) / (mass_of_water*specific_heat_capacity)
-    print(t_tank, heat_pump_status)
-    return [dT_tank_dt]
+    dT_tank_dt = (Q_transfer + Q_load_current - Q_loss) / (mass_of_water * specific_heat_capacity)
+    
+    return [dT_tank_dt], heat_pump_status[0]  # Return both dT/dt and updated heat pump status
 
+
+# Update Euler method to include status tracking
+def euler_method(ode_func, y0, t_span, time_step, heat_pump_status):
+    n_steps = int((t_span[1] - t_span[0]) / time_step) + 1
+    t = np.linspace(t_span[0], t_span[1], n_steps)
+    y = np.zeros(n_steps)
+    status = []  # Initialize an empty list to track heat pump status
+    y[0] = y0
+
+    # Initialize the heat pump status for the first time step
+    current_heat_pump_status = heat_pump_status[0]
+    status.append(current_heat_pump_status)
+
+    for i in range(1, n_steps):
+        dYdt, current_heat_pump_status = ode_func(t[i-1], [y[i-1]], heat_pump_status)
+        y[i] = y[i-1] + dYdt[0] * time_step
+        status.append(current_heat_pump_status)  # Append the current heat pump status
+
+    return t, y, status  # Return time, temperature, and heat pump status
 
 # Initial conditions
 T_tank = initial_tank_temperature
 time_span = (0, total_time)
-time_eval = np.arange(0, total_time, time_step)
 
-# Solve the ODE system with event handling using the 'RK45' method for stiff problems
-solution = solve_ivp(
-    tank_temperature_ode,
-    time_span,
-    [T_tank],
-    method='Radau',  # Use a method suited for stiff systems
-    args=(heat_pump_status,),  # Pass the heat pump status as an additional argument to the ODE function
-    t_eval=time_eval,)
-  
-# Extract the solution
-T_tank_solution = solution.y[0]
-time_array = solution.t
+# Use Euler's method to get results
+time_array, T_tank_solution, heat_pump_status_list = euler_method(
+    tank_temperature_ode, T_tank, time_span, time_step, heat_pump_status)
 
-# Plot the tank temperature over time
+# Ensure all lists have the same length
+print(f"Length of time_array: {len(time_array)}")
+print(f"Length of heat_pump_status_list: {len(heat_pump_status_list)}")
+
+# Plot the results for tank temperature
 plt.figure()
 plt.plot(time_array, T_tank_solution, label='Tank Temperature (K)')
 plt.xlabel('Time (seconds)')
 plt.ylabel('Tank Temperature (K)')
 plt.title('Tank Temperature Over Time')
-plt.axhline(y=333.15,color='r')
-plt.axhline(y=313.15,color= 'r')
+plt.axhline(333.15, color = "red", label = "Off Temperature Threshold")
+plt.axhline(313.15, color="green", label = "On Temperature Threshold")
 plt.grid(True)
-
-# Show the plot
+plt.legend()
 plt.show()
 
-# Find the maximum temperature and the corresponding time
-max_temperature = np.max(T_tank_solution)
-min_temperature = np.min(T_tank_solution)
+# Plot the heat pump status
+plt.figure()
+plt.plot(time_array, heat_pump_status_list, label='Heat Pump Status')
+plt.xlabel('Time (seconds)')
+plt.ylabel('Heat Pump Status')
+plt.title('Heat Pump Status Over Time')
+plt.grid(True)
+plt.legend()
+plt.show()
 
-max_time = time_array[np.argmax(T_tank_solution)]
-min_time = time_array[np.argmax(T_tank_solution)]
 
-
-
-print(f"The maximum tank temperature is {max_temperature:.2f} K")
-print(f"It occurs at {max_time / 3600:.2f} hours")
-
-print(f"The minimum tank temperature is {min_temperature:.2f} K")
-print(f"It occurs at {min_time / 3600:.2f} hours")
