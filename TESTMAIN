@@ -119,11 +119,12 @@ time_step = data_inputs['simulation_parameters']['time_points']['value']
 total_time = data_inputs['simulation_parameters']['total_time_seconds']['value']
 
 
+
 delta_t_ambient =  [temp - indoor_setpoint_temperature for temp in t_ambient]
 
 
 
-Q_load = [((wall_area * wall_U_value * t) + (roof_area * roof_U_value * t)) for t in delta_t_ambient]
+Q_load = np.abs([((wall_area * wall_U_value * t) + (roof_area * roof_U_value * t)) for t in delta_t_ambient])
 '''
 plt.figure(2)
 plt.plot(delta_t_ambient,Q_load )
@@ -138,8 +139,12 @@ STEP 4 BEGINS HERE
 
 
 # Constants for the simulation
-time_step = 10
-n_steps = total_time // time_step
+n_steps = time_step
+print(n_steps)
+
+time_step = total_time/n_steps
+print(time_step)
+
 # Initialize variables
 T_tank = initial_tank_temperature
 temperature_array = np.zeros(n_steps)
@@ -217,12 +222,12 @@ def tank_temperature_ode(t, y, heat_pump_status):
     Q_transfer, heat_pump_status[0] = heat_pump(t_tank, heat_pump_status[0])
     
     # Calculate heat load and heat loss
-    Q_load_current = ((wall_area * wall_U_value * delta_t_ambient_current) + 
-                      (roof_area * roof_U_value * delta_t_ambient_current))
+    Q_load_current = np.abs(((wall_area * wall_U_value * delta_t_ambient_current) + 
+                      (roof_area    * roof_U_value * delta_t_ambient_current)))
     Q_loss = heat_loss_coefficient * tank_surface_area * (t_tank - t_ambient_current)
     
     # Calculate the rate of temperature change (dT/dt)
-    dT_tank_dt = (Q_transfer + Q_load_current - Q_loss) / (mass_of_water * specific_heat_capacity)
+    dT_tank_dt = (Q_transfer - Q_load_current - Q_loss) / (mass_of_water * specific_heat_capacity)
     
     return [dT_tank_dt], heat_pump_status[0]  # Return both dT/dt and updated heat pump status
 
