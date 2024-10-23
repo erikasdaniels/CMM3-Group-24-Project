@@ -1,0 +1,131 @@
+
+import numpy as np
+import matplotlib.pyplot as plt
+import requests
+import yaml
+from datetime import datetime
+from meteostat import Point, Hourly
+
+# Fetch outdoor temperature data for Edinburgh (1st Jan 2023)
+location = Point(55.9533, -3.1883)
+start = datetime(2023, 1, 1, 0)
+end = datetime(2023, 1, 2, 0)
+data = Hourly(location, start, end).fetch().reset_index()
+
+# Ambient temperature in Kelvin
+data = Hourly(location,start,end)
+data = data.fetch()
+data = data.reset_index()
+
+t_ambient = []
+hours = data["time"].dt.hour
+
+for i in range(0,25):
+    t = data["temp"].iloc[i] + 273 
+    t_ambient.append(t)
+    
+print("")
+print("Here we can see the data that we've extracted from the meteostat library in the time period 1st Jan to 2nd Jan 2023:")
+print("")
+print(data)
+
+# Load COP and input data from the provided YAML files
+heat_pump_cop_file = "https://raw.githubusercontent.com/erikasdaniels/CMM3-Group-24-Project/refs/heads/main/heat_pump_cop_synthetic_full.yaml"
+inputs_file = "https://raw.githubusercontent.com/erikasdaniels/CMM3-Group-24-Project/refs/heads/main/inputs.yaml"
+
+response_cop = requests.get(heat_pump_cop_file)
+response_inputs = requests.get(inputs_file)
+
+if response_cop.status_code == 200 and response_inputs.status_code == 200:
+    data_cop = yaml.safe_load(response_cop.text)
+    data_inputs = yaml.safe_load(response_inputs.text)
+
+# Extract COP_noisy and outdoor_temp_C
+cop_values = [entry['COP_noisy'] for entry in data_cop['heat_pump_cop_data']]
+outdoor_temp_values = [entry['outdoor_temp_C'] for entry in data_cop['heat_pump_cop_data']]
+
+#Define three building types with varying characteristics
+buildings = [
+    {"name": "Default Building", "indoor_temp": 293.15, "roof_U": 0.18, "wall_U": 0.51, "roof_area": 120, "wall_area": 132},
+    {"name": "Well-Insulated Large Building", "indoor_temp": 295.15, "roof_U": 0.1, "wall_U": 0.3, "roof_area": 200, "wall_area": 250},
+    {"name": "Poorly Insulated Small Building", "indoor_temp": 290.15, "roof_U": 0.3, "wall_U": 0.7, "roof_area": 80, "wall_area": 100}
+]
+
+# Extract fixed values from inputs.yaml
+fixed_condenser_temperature = data_inputs['heat_pump']['fixed_condenser_temperature_K']['value']
+overall_heat_transfer_coefficient = data_inputs['heat_pump']['overall_heat_transfer_coefficient']['value']
+time_points = data_inputs['simulation_parameters']['time_points']['value']
+total_time_seconds = data_inputs['simulation_parameters']['total_time_seconds']['value']
+time_step = total_time_seconds / time_points
+
+# Ensure time_points matches the length of t_ambient data
+t_ambient = t_ambient[:time_points]  # Truncate or pad to match time_points if needed
+
+# Simulate heat pump and tank system for each building
+q_load_data = {}  # Store Q_load for each building type
+
+for building in buildings:
+    print(f"Simulating for {building['name']}")
+    
+    # Initial conditions and extracted values
+    indoor_setpoint_temperature = building["indoor_temp"]
+    delta_t_ambient = [indoor_setpoint_temperature - temp for temp in t_ambient]
+    
+    # Heat pump parameters to optimize
+    for heat_transfer_area in [1.0, 1.1, 1.2]:  # Heat transfer areas to optimize
+        for mass_of_water in [150, 200, 250]:  # Tank capacities to optimize
+
+            # Calculate Q_load (thermal load on the building)
+            q_load = [(building['wall_area'] * building['wall_U'] * dt) + 
+                      (building['roof_area'] * building['roof_U'] * dt) for dt in delta_t_ambient]
+
+            # Initialize variables for the simulation
+            tank_temperature = np.full(time_points, data_inputs['initial_conditions']['initial_tank_temperature_K']['value'])
+            total_energy_consumption = 0
+            max_heat_output = 0
+            cop_history = []
+
+            # Run simulation over time
+            for t in range(1, min(time_points, len(t_ambient))):
+                # Calculate the heat transfer rate (Q_transfer)
+                q_transfer = overall_heat_transfer_coefficient * heat_transfer_area * (fixed_condenser_temperature - tank_temperature[t-1])
+                total_energy_consumption += q_transfer * time_step  # Energy transferred
+
+                # Update tank temperature
+                tank_temperature[t] = tank_temperature[t-1] + (q_transfer - q_load[t-1]) * time_step / (mass_of_water * data_inputs['hot_water_tank']['specific_heat_capacity']['value'])
+
+                # Ensure tank temperature stays within operational range
+                tank_temperature[t] = min(max(tank_temperature[t], data_inputs['heat_pump']['on_temperature_threshold_K']['value']),
+                                          data_inputs['heat_pump']['off_temperature_threshold_K']['value'])
+
+                # Find the maximum heat output from the heat pump
+                max_heat_output = max(max_heat_output, q_transfer)
+
+                # Calculate COP based on current outdoor temperature and log it
+                current_outdoor_temp = t_ambient[t-1] - 273
+                closest_temp_index = np.abs(np.array(outdoor_temp_values) - current_outdoor_temp).argmin()
+                cop_history.append(cop_values[closest_temp_index])
+
+            # Calculate performance metrics
+            average_cop = np.mean(cop_history)
+            total_energy_kwh = total_energy_consumption / 3600000  # Convert J to kWh
+
+            # Print the performance metrics for this configuration
+            print(f"Heat Transfer Area: {heat_transfer_area}, Tank Capacity: {mass_of_water} kg")
+            print(f"Total Energy Consumption: {total_energy_kwh:.2f} kWh")
+            print(f"Average COP: {average_cop:.2f}")
+            print(f"Maximum Heat Output: {max_heat_output:.2f} W\n")
+
+    # Store Q_load for plotting comparison
+    q_load_data[building['name']] = q_load
+
+# Plot comparison of Q_Load vs Ambient Temperature for Large and Small Buildings
+plt.figure(figsize=(10, 6))
+plt.plot(t_ambient, q_load_data["Well-Insulated Large Building"], label="Well-Insulated Large Building", color="blue")
+plt.plot(t_ambient, q_load_data["Poorly Insulated Small Building"], label="Poorly Insulated Small Building", color="red")
+plt.title("Q_Load vs Ambient Temperature for Large and Small Buildings")
+plt.xlabel("Ambient Temperature (K)")
+plt.ylabel("Q_Load (W)")
+plt.legend()
+plt.grid(True)
+plt.show()
