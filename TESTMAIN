@@ -212,11 +212,13 @@ STEP 5 BEGINS HERE
 '''
 tank_surface_area = 2
 
+
 # Initialize the Heat transfer, load and loss lists
 current_list = []
 loss_list = []
 load_list = []
 transfer_list = []
+time_hours = time_array / 3600
 
 # Define the ODE for tank temperature
 def tank_temperature_ode(t, y, heat_pump_status):
@@ -287,36 +289,34 @@ max_index = np.argmax(T_tank_solution)
 min_time = time_array[min_index]
 max_time = time_array[max_index]
 
-# Print the minimum and maximum temperatures with their times
+# Print the minimum and maximum temperatures with their times in HH:MM format
+min_hours = int(min_time // 3600)
+min_minutes = int((min_time % 3600) // 60)
+max_hours = int(max_time // 3600)
+max_minutes = int((max_time % 3600) // 60)
+
 print("")
-print(f'Minimum Temperature: {min_temp:.2f} K at {min_time:.2f} hours')
-print(f'Maximum Temperature: {max_temp:.2f} K at {max_time:.2f} hours')
+print(f'Minimum Temperature: {min_temp:.2f} K at {min_hours:02}:{min_minutes:02}')
+print(f'Maximum Temperature: {max_temp:.2f} K at {max_hours:02}:{max_minutes:02}')
 
-
-# Plot the tank temperature against time
-
+# Plot the tank temperature
 plt.figure()
-plt.plot(time_array, T_tank_solution, label='Tank Temperature (K)')
+plt.plot(time_hours, T_tank_solution, label='Tank Temperature (K)')
 plt.xlabel('Time (hours)')
 plt.ylabel('Tank Temperature (K)')
 plt.title('Tank Temperature Over Time')
-
-# Plot the off and on temperature thresholds
 plt.axhline(333.15, color="red", label="Off Temperature Threshold")
 plt.axhline(313.15, color="green", label="On Temperature Threshold")
-
-# Plot min and max temperature points
-plt.scatter(min_time, min_temp, color='orange', zorder=5)
-plt.scatter(max_time, max_temp, color='purple', zorder=5)
+plt.scatter(min_time / 3600, min_temp, color='orange', zorder=5)
+plt.scatter(max_time / 3600, max_temp, color='purple', zorder=5)
+plt.xlim(0, 24)
 plt.grid(True)
-plt.legend()
-plt.show()
-
+plt.legend(loc = 'right')
 
 # Plot the heat pump status
 plt.figure()
-plt.plot(time_array, heat_pump_status_list, label='Heat Pump Status')
-plt.xlabel('Time (seconds)')
+plt.plot(time_hours, heat_pump_status_list, label='Heat Pump Status')
+plt.xlabel('Time (hours)')
 plt.ylabel('Heat Pump Status')
 plt.title('Heat Pump Status Over Time')
 plt.grid(True)
@@ -325,8 +325,8 @@ plt.show()
 
 # Plot the ambient temperature
 plt.figure()
-plt.plot(time_array[0:-1],current_list, label='Current Ambient Temperature (K)')
-plt.xlabel('Time (seconds)')
+plt.plot(time_hours[:-1],current_list, label='Current Ambient Temperature (K)')
+plt.xlabel('Time (hours)')
 plt.ylabel('Ambient Temperature (K)')
 plt.title('Ambient Temperature Over Time')
 plt.grid(True)
@@ -337,12 +337,12 @@ plt.show()
 plt.figure()
 
 # Plotting all three datasets on the same graph
-plt.plot(time_array[:-1], loss_list, label='Heat Loss (W)', color='red')  
-plt.plot(time_array[:-1], transfer_list, label='Heat Transfer (W)', color='blue')  
-plt.plot(time_array[:-1], load_list, label='Heat Load (W)', color='green')  
+plt.plot(time_hours[:-1], loss_list, label='Heat Loss (W)', color='red')  
+plt.plot(time_hours[:-1], transfer_list, label='Heat Transfer (W)', color='blue')  
+plt.plot(time_hours[:-1], load_list, label='Heat Load (W)', color='green')  
 
 # Adding labels and title
-plt.xlabel('Time (seconds)')
+plt.xlabel('Time (hours)')
 plt.ylabel('Power (W)')
 plt.title('Heat Loss, Transfer, and Load Over Time')
 
