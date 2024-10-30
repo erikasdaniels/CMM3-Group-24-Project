@@ -1,3 +1,9 @@
+from datetime import datetime
+from meteostat import Point, Hourly
+import numpy as np
+import yaml
+import matplotlib.pyplot as plt
+import requests
 
 
 # Define the location (Edinburgh: 55.9533° N, 3.1883° W)
@@ -11,10 +17,8 @@ end = datetime(2023, 1, 2, 0) # End time (24-hour period)
 data = Hourly(location,start,end)
 data = data.fetch()
 data = data.reset_index()
-
 t_ambient = []
 hours = data["time"].dt.hour
-
 for i in range(0,25):
     t = data["temp"].iloc[i] + 273 
     t_ambient.append(t)
@@ -25,24 +29,27 @@ print("Here we can see the data that we've extracted from the meteostat library 
 print("")
 print(data)
 
+'''
+----------------------------------------------------------------------------------------------------------------
 #STEP 2 BEGINS HERE
+'''
 
 # Load the YAML file directly from github
 heat_pump_cop_file = "https://raw.githubusercontent.com/erikasdaniels/CMM3-Group-24-Project/refs/heads/main/heat_pump_cop_synthetic_full.yaml"
 
 response_cop = requests.get(heat_pump_cop_file)
- 
+
 if response_cop.status_code == 200:
         data_cop = yaml.safe_load(response_cop.text)
-    
+
 inputs_file = "https://raw.githubusercontent.com/erikasdaniels/CMM3-Group-24-Project/refs/heads/main/inputs.yaml"
- 
+
 response_inputs = requests.get(inputs_file)
- 
+
 if response_inputs.status_code == 200:
         data_inputs = yaml.safe_load(response_inputs.text)
-  
-        
+
+
 # Extract COP_noisy and outdoor_temp_C into arrays
 cop_values = [entry['COP_noisy'] for entry in data_cop['heat_pump_cop_data']]
 outdoor_temp_values = [entry['outdoor_temp_C'] for entry in data_cop['heat_pump_cop_data']]
@@ -72,8 +79,29 @@ print("")
 print("The gradient of the best fit line, b =" ,slope)
 print("The y intercept of the best fit line, a =" , intercept)
 
-#STEP 3 STARTS HERE    
-
+# Calculating correlation co-efficient r
+cop_mean = np.mean(np_cop_values)
+inverse_array_mean = np.mean(np_inverse_array)
+covariance = np.sum((inverse_array - inverse_array_mean)*(np_cop_values-cop_mean))
+SD_product = np.sqrt(np.sum((np_inverse_array - inverse_array_mean)**2)*np.sum((np_cop_values-cop_mean)**2))
+r = covariance / SD_product 
+print("Correlation coefficient, r=", r)
+if r == 1 or r == -1:
+    print("Perfect association")
+elif 0.8 <= abs(r) < 1:
+    print("Very strong association")
+elif 0.6 <= abs(r) < 0.8:
+    print("Strong association")
+elif 0.4 <= abs(r) < 0.6:
+    print("Moderate association")
+elif 0.2 <= abs(r) < 0.4:
+    print("Weak association")
+else:
+    print("Very weak/no association")
+'''
+#STEP 3 STARTS HERE
+--------------------------------------------------------------------------------------------------------    
+'''
 # Extracting values from inputs .yaml and storing them in separate variables
 indoor_setpoint_temperature = data_inputs['building_properties']['indoor_setpoint_temperature_K']['value']
 roof_U_value = data_inputs['building_properties']['roof_U_value']['value']
@@ -94,19 +122,202 @@ total_thermal_capacity = data_inputs['hot_water_tank']['total_thermal_capacity']
 
 initial_tank_temperature = data_inputs['initial_conditions']['initial_tank_temperature_K']['value']
 
-time_points = data_inputs['simulation_parameters']['time_points']['value']
-total_time_seconds = data_inputs['simulation_parameters']['total_time_seconds']['value']
+time_step = data_inputs['simulation_parameters']['time_points']['value']
+total_time = data_inputs['simulation_parameters']['total_time_seconds']['value']
 
 
-delta_t_ambient = [indoor_setpoint_temperature - temp for temp in t_ambient]
+
+delta_t_ambient =  [temp - indoor_setpoint_temperature for temp in t_ambient]
 
 
-q_load = [((wall_area * wall_U_value * t) + (roof_area * roof_U_value * t)) for t in delta_t_ambient]
+
+Q_load = np.abs([((wall_area * wall_U_value * t) + (roof_area * roof_U_value * t)) for t in delta_t_ambient])
 
 plt.figure(2)
-plt.plot(t_ambient,q_load )
-plt.title("Plot of Q_Load against Ambient Temperature")
-plt.xlabel("Outside Ambient Temperature (K)")
+plt.plot(delta_t_ambient,Q_load )
+plt.title("Plot of Q_Load against Delta T")
+plt.xlabel(" Outside Temperature - Indoor Setpoint Temperature (K)")
 plt.ylabel("Q_Load (W)")
 
+'''
+-------------------------------------------------------------------------------------------------------------------------
+STEP 4 BEGINS HERE
+'''
 
+
+# Constants for the simulation
+n_steps = time_step
+
+time_step = total_time/n_steps
+
+# Initialize variables
+T_tank = initial_tank_temperature
+temperature_array = np.zeros(n_steps)
+time_array = np.arange(0, total_time, time_step)
+heat_pump_status = [False]  
+
+def heat_pump(t_tank, heat_pump_status):
+
+    # Calculate the heat transfer if the pump is on
+    Q_transfer = overall_heat_transfer_coefficient * heat_transfer_area * (fixed_condenser_temperature - t_tank)
+
+    # Check the current tank temperature and update the pump status
+    if t_tank < on_temperature_threshold:
+        heat_pump_status = True  # Turn on the heat pump
+     
+        
+    elif t_tank >= off_temperature_threshold:
+        heat_pump_status = False  # Turn off the heat pump
+       
+
+    # Return heat transfer based on pump status
+    if heat_pump_status == True:
+        return Q_transfer, heat_pump_status
+    else:
+        return 0 , heat_pump_status  # No heat transfer when the pump is off
+
+
+'''
+STEP 5 BEGINS HERE 
+-----------------------------------------------------------------------------------------------------------------------------------
+'''
+tank_surface_area = 2
+
+
+# Initialize the Heat transfer, load and loss lists
+current_list = []
+loss_list = []
+load_list = []
+transfer_list = []
+time_hours = time_array / 3600
+
+# Define the ODE for tank temperature
+def tank_temperature_ode(t, y, heat_pump_status):
+    t_tank = y[0]  # Unpack the tank temperature from the state vector
+    
+    current_hour = int(t // 3600)
+    
+    # Assign the current ambient temperature from the list of hours
+    t_ambient_current = t_ambient[current_hour]
+    delta_t_ambient_current = t_ambient_current - indoor_setpoint_temperature
+    
+    current_list.append(t_ambient_current)
+    
+    # Get heat transfer from the heat pump
+    Q_transfer, heat_pump_status[0] = heat_pump(t_tank, heat_pump_status[0])
+    transfer_list.append(Q_transfer)
+    
+    # Calculate heat load and heat loss
+    Q_load_current = np.abs((wall_area * wall_U_value * delta_t_ambient_current) + 
+                              (roof_area * roof_U_value * delta_t_ambient_current))
+    load_list.append(Q_load_current)
+    
+    Q_loss = float(heat_loss_coefficient * tank_surface_area * (t_tank - t_ambient_current))
+    loss_list.append(Q_loss)
+        
+    
+    # Calculate the rate of temperature change (dT/dt)
+    dT_tank_dt = (Q_transfer -Q_loss - Q_load_current) / (mass_of_water * specific_heat_capacity)
+    
+    return [dT_tank_dt], heat_pump_status[0]  # Return both dT/dt and updated heat pump status
+
+
+# Update Euler method to include status tracking
+def euler_method(ode_func, y0, t_span, time_step, heat_pump_status):
+    n_steps = int((t_span[1] - t_span[0]) / time_step) + 1
+    t = np.linspace(t_span[0], t_span[1], n_steps)
+    y = np.zeros(n_steps)
+    status = []  # Initialize an empty list to track heat pump status
+    y[0] = y0
+
+    # Initialize the heat pump status for the first time step
+    current_heat_pump_status = heat_pump_status[0]
+    status.append(current_heat_pump_status)
+
+    for i in range(1, n_steps):
+        dYdt, current_heat_pump_status = ode_func(t[i-1], [y[i-1]], heat_pump_status)
+        y[i] = y[i-1] + dYdt[0] * time_step
+        status.append(current_heat_pump_status)  # Append the current heat pump status
+
+    return t, y, status  # Return time, temperature, and heat pump status
+
+
+# Initial conditions
+T_tank = initial_tank_temperature
+time_span = (0, total_time)
+
+# Use Euler's method to get results
+time_array, T_tank_solution, heat_pump_status_list = euler_method(
+    tank_temperature_ode, T_tank, time_span, time_step, heat_pump_status)
+
+# Find the minimum and maximum temperatures and their indices
+min_temp = np.min(T_tank_solution)
+max_temp = np.max(T_tank_solution)
+min_index = np.argmin(T_tank_solution)
+max_index = np.argmax(T_tank_solution)
+
+# Corresponding times
+min_time = time_array[min_index]
+max_time = time_array[max_index]
+
+# Print the minimum and maximum temperatures with their times in HH:MM format
+min_hours = int(min_time // 3600)
+min_minutes = int((min_time % 3600) // 60)
+max_hours = int(max_time // 3600)
+max_minutes = int((max_time % 3600) // 60)
+
+print("")
+print(f'Minimum Temperature: {min_temp:.2f} K at {min_hours:02}:{min_minutes:02}')
+print(f'Maximum Temperature: {max_temp:.2f} K at {max_hours:02}:{max_minutes:02}')
+
+# Plot the tank temperature
+plt.figure()
+plt.plot(time_hours, T_tank_solution, label='Tank Temperature (K)')
+plt.xlabel('Time (hours)')
+plt.ylabel('Tank Temperature (K)')
+plt.title('Tank Temperature Over Time')
+plt.axhline(333.15, color="red", label="Off Temperature Threshold")
+plt.axhline(313.15, color="green", label="On Temperature Threshold")
+plt.scatter(min_time / 3600, min_temp, color='orange', zorder=5)
+plt.scatter(max_time / 3600, max_temp, color='purple', zorder=5)
+plt.xlim(0, 24)
+plt.grid(True)
+plt.legend(loc = 'right')
+
+# Plot the heat pump status
+plt.figure()
+plt.plot(time_hours, heat_pump_status_list, label='Heat Pump Status')
+plt.xlabel('Time (hours)')
+plt.ylabel('Heat Pump Status')
+plt.title('Heat Pump Status Over Time')
+plt.grid(True)
+plt.legend()
+plt.show()
+
+# Plot the ambient temperature
+plt.figure()
+plt.plot(time_hours[:-1],current_list, label='Current Ambient Temperature (K)')
+plt.xlabel('Time (hours)')
+plt.ylabel('Ambient Temperature (K)')
+plt.title('Ambient Temperature Over Time')
+plt.grid(True)
+plt.legend()
+plt.show()
+
+
+plt.figure()
+
+# Plotting all three datasets on the same graph
+plt.plot(time_hours[:-1], loss_list, label='Heat Loss (W)', color='red')  
+plt.plot(time_hours[:-1], transfer_list, label='Heat Transfer (W)', color='blue')  
+plt.plot(time_hours[:-1], load_list, label='Heat Load (W)', color='green')  
+
+# Adding labels and title
+plt.xlabel('Time (hours)')
+plt.ylabel('Power (W)')
+plt.title('Heat Loss, Transfer, and Load Over Time')
+
+# Adding grid, legend, and showing the plot
+plt.grid(True)
+plt.legend()
+plt.show()
