@@ -18,7 +18,7 @@ building_properties:
 heat_pump:
   fixed_condenser_temperature_K:
     comment: "Fixed condenser temperature in K (60degC)"
-    value: 353.15
+    value: 343.15
   heat_transfer_area:
     comment: "Adjusted heat transfer area (m2) to limit Q_transfer"
     value: 1.11
