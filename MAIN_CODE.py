@@ -23,12 +23,12 @@ for i in range(0,25):
     t = data["temp"].iloc[i] + 273 
     t_ambient.append(t)
     
-'''
+
 print("")
 print("Here we can see the data that we've extracted from the meteostat library in the time period 1st Jan to 2nd Jan 2023:")
 print("")
-print(data)
-'''
+print(data[['time', 'temp']])
+
 '''
 ----------------------------------------------------------------------------------------------------------------
 #STEP 2 BEGINS HERE
@@ -74,9 +74,12 @@ plt.xlabel("1/Delta_T")
 plt.ylabel("Coefficient of Performance")
 plt.title("Plot of COP vs 1/Delta_T")
 
+
+
 print("")
-print("The gradient of the best fit line, b =" ,slope)
-print("The y intercept of the best fit line, a =" , intercept)
+print("---COP GRAPH---")
+print(f"The gradient of the best fit line, b = {slope:.2f}" )
+print(f"The y intercept of the best fit line, a = {intercept:.2f} ")
 
 # Calculating correlation co-efficient r
 cop_mean = np.mean(np_cop_values)
@@ -84,19 +87,19 @@ inverse_array_mean = np.mean(np_inverse_array)
 covariance = np.sum((inverse_array - inverse_array_mean)*(np_cop_values-cop_mean))
 SD_product = np.sqrt(np.sum((np_inverse_array - inverse_array_mean)**2)*np.sum((np_cop_values-cop_mean)**2))
 r = covariance / SD_product 
-print("Correlation coefficient, r=", r)
+print(f"Correlation coefficient, r= {r:.2f}")
 if r == 1 or r == -1:
-    print("Perfect association")
+    print("This graph has perfect association")
 elif 0.8 <= abs(r) < 1:
-    print("Very strong association")
+    print("This graph has very strong association")
 elif 0.6 <= abs(r) < 0.8:
-    print("Strong association")
+    print("This graph has strong association")
 elif 0.4 <= abs(r) < 0.6:
-    print("Moderate association")
+    print("This graph has moderate association")
 elif 0.2 <= abs(r) < 0.4:
-    print("Weak association")
+    print("This graph has weak association")
 else:
-    print("Very weak/no association")
+    print("This graph has very weak/no association")
 '''
 #STEP 3 STARTS HERE
 --------------------------------------------------------------------------------------------------------    
@@ -174,37 +177,7 @@ def heat_pump(t_tank, heat_pump_status):
         return Q_transfer, heat_pump_status
     else:
         return 0 , heat_pump_status  # No heat transfer when the pump is off
-'''
-# Simulation loop for the entire 24 hours
-for i in range(n_steps):
-    Q_transfer, heat_pump_status = heat_pump(T_tank,heat_pump_status)# Get the heat transfer from the heat pump function
-    
-    T_tank += (Q_transfer * time_step) / (4186 * 200)  # Update the tank temperature
-    temperature_array[i] = T_tank  # Store the current temperature
 
-# Find the maximum temperature and the corresponding time
-max_temperature = np.max(temperature_array)
-max_time = time_array[np.argmax(temperature_array)]
-
-# Plot the tank temperature over time
-plt.figure()
-plt.plot(time_array, temperature_array, label='Tank Temperature (K)')
-plt.scatter(max_time, max_temperature, color='red', zorder=5, label=f'Max Temp: {max_temperature:.2f} K')
-
-# Add labels and title
-plt.xlabel('Time (seconds)')
-plt.ylabel('Tank Temperature (K)')
-plt.title('Tank Temperature Over Time')
-plt.grid(True)
-plt.legend()
-
-# Show the plot
-plt.show()
-
-# Print the maximum temperature and the corresponding time
-print(f"The maximum tank temperature is {max_temperature:.2f} K")
-print(f"It occurs at {max_time / 3600:.2f} hours")
-'''
 
 '''
 STEP 5 BEGINS HERE 
@@ -218,6 +191,7 @@ current_list = []
 loss_list = []
 load_list = []
 transfer_list = []
+cop_list = []
 time_hours = time_array / 3600
 
 # Define the ODE for tank temperature
@@ -229,8 +203,10 @@ def tank_temperature_ode(t, y, heat_pump_status):
     # Assign the current ambient temperature from the list of hours
     t_ambient_current = t_ambient[current_hour]
     delta_t_ambient_current = t_ambient_current - indoor_setpoint_temperature
-    
     current_list.append(t_ambient_current)
+    
+    cop = intercept + slope*(1/delta_t_ambient_current)
+    cop_list.append(cop)
     
     # Get heat transfer from the heat pump
     Q_transfer, heat_pump_status[0] = heat_pump(t_tank, heat_pump_status[0])
@@ -295,9 +271,6 @@ min_minutes = int((min_time % 3600) // 60)
 max_hours = int(max_time // 3600)
 max_minutes = int((max_time % 3600) // 60)
 
-print("")
-print(f'Minimum Temperature: {min_temp:.2f} K at {min_hours:02}:{min_minutes:02}')
-print(f'Maximum Temperature: {max_temp:.2f} K at {max_hours:02}:{max_minutes:02}')
 
 # Plot the tank temperature
 plt.figure()
@@ -323,14 +296,25 @@ plt.grid(True)
 plt.legend()
 plt.show()
 
-# Plot the ambient temperature
-plt.figure()
-plt.plot(time_hours[:-1],current_list, label='Current Ambient Temperature (K)')
-plt.xlabel('Time (hours)')
-plt.ylabel('Ambient Temperature (K)')
-plt.title('Ambient Temperature Over Time')
-plt.grid(True)
-plt.legend()
+# Create a figure and axis
+fig, ax1 = plt.subplots()
+
+# Plot ambient temperature on the first y-axis
+ax1.plot(time_hours[:-1], current_list, color='blue', label='Ambient Temperature (K)')
+ax1.set_xlabel('Time (hours)')
+ax1.set_ylabel('Ambient Temperature (K)', color='blue')
+ax1.tick_params(axis='y', labelcolor='blue')
+ax1.grid(True)
+
+# Create a second y-axis for the COP values
+ax2 = ax1.twinx()
+ax2.plot(time_hours[:-1], cop_list, color='green', label='COP')
+ax2.set_ylabel('COP', color='green')
+ax2.tick_params(axis='y', labelcolor='green')
+
+# Title and legend
+plt.title('Ambient Temperature and COP Over Time')
+fig.tight_layout()  # Adjust layout for better fit
 plt.show()
 
 
@@ -350,4 +334,38 @@ plt.title('Heat Loss, Transfer, and Load Over Time')
 plt.grid(True)
 plt.legend()
 plt.show()
+
+# Total energy used by the heat pump over 24 hours
+total_energy_joules = np.sum(transfer_list) * time_step  # Summing Q_transfer * time_step to get total energy in joules
+total_energy_kwh = total_energy_joules / 3_600_000  # Convert joules to kWh
+average_cop = np.mean(cop_list)
+min_cop = np.min(cop_list)
+max_cop = np.max(cop_list)
+
+
+# Calculate the maximum power output of the heat pump
+max_thermal_output = max(transfer_list)
+
+# Calculate total useful thermal energy needed by the building over 24 hours (in joules)
+total_useful_energy_joules = np.sum(load_list) * time_step  # Joules
+total_useful_energy_kwh = total_useful_energy_joules / 3_600_000  # Convert to kWh
+
+# Calculate system efficiency as the ratio of useful energy to electrical energy input
+system_efficiency = (total_useful_energy_kwh / total_energy_kwh) * 100  # Efficiency as a percentage
+
+
+print()
+print("---PERFORMANCE METRICS---")
+print(f'Minimum Temperature: {min_temp:.2f} K at {min_hours:02}:{min_minutes:02}')
+print(f'Maximum Temperature: {max_temp:.2f} K at {max_hours:02}:{max_minutes:02}')
+print()
+print(f"Total energy usage by the heat pump over 24 hours: {total_energy_kwh:.2f} kWh")
+print(f"Total useful thermal energy provided to meet heating load: {total_useful_energy_kwh:.2f} kWh")
+print(f"Total system efficiency: {system_efficiency:.2f}%")
+print()
+print(f"Heat pump maximum thermal output: {max_thermal_output:.2f} W")
+print()
+print(f"Average COP over 24 hours: {average_cop:.2f}")
+print(f"Maximum COP: {max_cop:.2f}, Minimum COP: {min_cop:.2f} ")
+
 
