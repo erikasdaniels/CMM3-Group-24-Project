@@ -41,7 +41,7 @@ class GUI:
         self.root.title("Task B - User Interface - Group 24")
 
         # Target resolution
-        target_width, target_height = 2560, 1440
+        target_width, target_height = 2560, 1200
         
         # Get screen resolution
         screen_width = self.root.winfo_screenwidth()
@@ -133,18 +133,22 @@ class GUI:
         
         self.populate_initial_values()
 
-        # Plot and Heat Transfer buttons
+        # Adjust the columns in input_frame to accommodate centering
+        input_frame.grid_columnconfigure(0, weight=1)
+        input_frame.grid_columnconfigure(1, weight=1)
+        
+        # Plot and Heat Transfer buttons arranged in a centered 2x2 grid
         self.execute_button = ctk.CTkButton(input_frame, text="Plot Tank Temperature", command=self.execute, width=int(150 * self.scale))
-        self.execute_button.grid(row=len(self.inputs) + 9, column=0, columnspan=2, pady=(int(20 * self.scale), int(10 * self.scale)))
-
-        self.heat_button = ctk.CTkButton(input_frame, text="Plot Heat Transfer", command=self.heat, width=int(150 * self.scale))
-        self.heat_button.grid(row=len(self.inputs) + 10, column=0, columnspan=2, pady=(int(10 * self.scale)))
-
-        self.clear_button = ctk.CTkButton(input_frame, text="Clear Figure", command=self.clear_figure, width=int(150 * self.scale))
-        self.clear_button.grid(row=len(self.inputs) + 11, column=0, columnspan=2, pady=(int(10 * self.scale)))
-
+        self.execute_button.grid(row=len(self.inputs) + 9, column=0, pady=(int(20 * self.scale), int(10 * self.scale)), padx=(0, int(10 * self.scale)), sticky="EW")
+        
+        self.heat_button = ctk.CTkButton(input_frame, text="Clear Figure", command=self.clear_figure, width=int(150 * self.scale))
+        self.heat_button.grid(row=len(self.inputs) + 9, column=1, pady=(int(20 * self.scale), int(10 * self.scale)), padx=(int(10 * self.scale), 0), sticky="EW")
+        
+        self.clear_button = ctk.CTkButton(input_frame, text="Plot Heat Transfer", command=self.heat, width=int(150 * self.scale))
+        self.clear_button.grid(row=len(self.inputs) + 10, column=0, pady=(int(10 * self.scale)), padx=(0, int(10 * self.scale)), sticky="EW")
+        
         self.reset_button = ctk.CTkButton(input_frame, text="Reset Inputs", command=self.reset_inputs, width=int(150 * self.scale))
-        self.reset_button.grid(row=len(self.inputs) + 12, column=0, columnspan=2, pady=(int(10 * self.scale)))
+        self.reset_button.grid(row=len(self.inputs) + 10, column=1, pady=(int(10 * self.scale)), padx=(int(10 * self.scale), 0), sticky="EW")
 
         # Figure frame with adjusted size
         figure_frame = ctk.CTkFrame(self.root)
