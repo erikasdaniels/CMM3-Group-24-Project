@@ -1,16 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Nov 10 15:14:37 2024
-
-@author: chxrl
-"""
-
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Nov 10 14:29:57 2024
-
-@author: chxrl
-"""
 
 import customtkinter as ctk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -53,7 +40,7 @@ class GUI:
         self.root = ctk.CTk()  # Use CTk instead of Tk
         
         # Set the geometry to a reasonable size
-        self.root.geometry("1200x800")  # Width x Height
+        self.root.geometry("1920x1080")  # Width x Height
         
         self.root.title("Task B - User Interface - Group 24")
 
@@ -597,6 +584,7 @@ class GUI:
         self.ax.set_ylabel('Power (W)')
         self.ax.set_title('Heat Loss, Transfer, and Load Over Time')
         self.ax.legend(loc = 'upper right')
+        self.ax.grid(True)
         self.canvas.draw()
 
 
