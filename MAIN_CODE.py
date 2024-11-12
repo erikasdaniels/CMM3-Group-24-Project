@@ -183,7 +183,11 @@ def heat_pump(t_tank, heat_pump_status):
 STEP 5 BEGINS HERE 
 -----------------------------------------------------------------------------------------------------------------------------------
 '''
-tank_surface_area = 2
+#calcualting SA from ratio of radius to height
+k = 1/2 
+density_water = 997 #kg/m^3
+V_water = mass_of_water/density_water
+tank_surface_area = 2*((V_water)**(2/3))*math.pi**(1/3)*(k**(1/3)+k**(2/3))
 
 
 # Initialize the Heat transfer, load and loss lists
