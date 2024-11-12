@@ -1,3 +1,6 @@
+indoor_setpoint_temperature_K:
+    comment: "Indoor setpoint temperature (K)"
+    value: 293.15
 new_build_house:
   floor_area:
     value: 92
