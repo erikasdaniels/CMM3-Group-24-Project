@@ -50,15 +50,15 @@ class GUI:
 
         # Frame for input boxes on the left
         input_frame = ctk.CTkFrame(self.root)
-        input_frame.pack(side="left", padx=(40, 10), pady=20)
+        input_frame.pack(side="left", padx=(40, 10), pady=5)
 
         # Adjusting the Heating label above the slider
-        adjusting_label = ctk.CTkLabel(input_frame, text='Adjusting The Heating', font=("Arial", 18, 'underline'))
-        adjusting_label.grid(row=0, column=0, columnspan=2, pady=(10, 5), sticky="W")
+        adjusting_label = ctk.CTkLabel(input_frame, text='Adjusting The Heating', font=("Arial", 14, 'underline'))
+        adjusting_label.grid(row=0, column=0, columnspan=2, pady=(5, 5), sticky="W")
 
         # Slider for Indoor Temperature Set Point
         self.indoor_temp_label = ctk.CTkLabel(input_frame, text='Indoor Temperature Set Point (°C):')
-        self.indoor_temp_label.grid(row=1, column=0, sticky="W", pady=(10, 5))
+        self.indoor_temp_label.grid(row=1, column=0, sticky="W", pady=(5, 5))
 
         self.indoor_temp_slider = ctk.CTkSlider(input_frame, from_=10, to=30, number_of_steps=20)
         self.indoor_temp_slider.set(23)  # Set initial value
@@ -67,7 +67,7 @@ class GUI:
         # Initialize the current value label
         self.current_value = self.indoor_temp_slider.get()  # Get initial slider value
         self.current_value_label = ctk.CTkLabel(input_frame, text=f"{self.current_value:.1f} °C", text_color="#0078D7")
-        self.current_value_label.grid(row=3, column=0, pady=(0, 20), sticky="W")
+        self.current_value_label.grid(row=3, column=0, pady=(0,5), sticky="W")
 
         # Update the slider value label when the slider changes
         self.indoor_temp_slider.configure(command=self.update_slider_value)
@@ -76,46 +76,46 @@ class GUI:
         self.update_slider_value(self.indoor_temp_slider.get())
         
         # Date set label
-        model_parameters_label = ctk.CTkLabel(input_frame, text='Setting the Simulation Date', font=("Arial", 18, 'underline'))
-        model_parameters_label.grid(row=4, column=0, columnspan=2, pady=(0, 10), sticky="W")
+        model_parameters_label = ctk.CTkLabel(input_frame, text='Setting the Simulation Date', font=("Arial", 14, 'underline'))
+        model_parameters_label.grid(row=4, column=0, columnspan=2, pady=(0, 5), sticky="W")
         
         # Frame to hold the day, month, year entry boxes together
         date_frame = ctk.CTkFrame(input_frame, fg_color="transparent")
-        date_frame.grid(row=5, column=0, columnspan=2, sticky="W", pady=(0, 10))
+        date_frame.grid(row=5, column=0, columnspan=2, sticky="W", pady=(0, 5))
 
         # Input boxes for day, month, year in the same row within the date_frame
         self.day_entry = ctk.CTkEntry(date_frame, width=50, placeholder_text="DD")
-        self.day_entry.grid(row=0, column=0, padx=(0, 5), pady=(0, 10))
+        self.day_entry.grid(row=0, column=0, padx=(0, 5), pady=(0, 5))
 
         self.month_entry = ctk.CTkEntry(date_frame, width=50, placeholder_text="MM")
-        self.month_entry.grid(row=0, column=1, padx=(5, 5), pady=(0, 10))
+        self.month_entry.grid(row=0, column=1, padx=(5, 5), pady=(0, 5))
 
         self.year_entry = ctk.CTkEntry(date_frame, width=70, placeholder_text="YYYY")
-        self.year_entry.grid(row=0, column=2, padx=(5, 0), pady=(0, 10))
+        self.year_entry.grid(row=0, column=2, padx=(5, 0), pady=(0, 5))
         
         # Building presets label
-        model_parameters_label = ctk.CTkLabel(input_frame, text='Building Presets', font=("Arial", 18, 'underline'))
-        model_parameters_label.grid(row=6, column=0, columnspan=2, pady=(0, 10), sticky="W")
+        model_parameters_label = ctk.CTkLabel(input_frame, text='Building Presets', font=("Arial", 14, 'underline'))
+        model_parameters_label.grid(row=6, column=0, columnspan=2, pady=(0, 5), sticky="W")
         
 
         # Frame for building selection buttons
         button_frame = ctk.CTkFrame(input_frame)
-        button_frame.grid(row=7, column=0, columnspan=2, pady=(10, 10))  # Positioned just above the model parameters
+        button_frame.grid(row=7, column=0, columnspan=2, pady=(5, 5))  # Positioned just above the model parameters
         
 
         # Building selection buttons
         self.new_build_button = ctk.CTkButton(button_frame, text="New Build House", command=self.load_new_build)
-        self.new_build_button.pack(side="left", padx=(0, 10))
+        self.new_build_button.pack(side="left", padx=(0, 5))
 
         self.larch_button = ctk.CTkButton(button_frame, text="Larch Lecture Theatre", command=self.load_larch_lecture)
-        self.larch_button.pack(side="left", padx=(0, 10))
+        self.larch_button.pack(side="left", padx=(0, 5))
 
         self.warehouse_button = ctk.CTkButton(button_frame, text="Warehouse", command=self.load_warehouse)
         self.warehouse_button.pack(side="left")
 
         # Model Parameters label
-        model_parameters_label = ctk.CTkLabel(input_frame, text='Model Parameters', font=("Arial", 18, 'underline'))
-        model_parameters_label.grid(row=8, column=0, columnspan=2, pady=(0, 10), sticky="W")
+        model_parameters_label = ctk.CTkLabel(input_frame, text='Model Parameters', font=("Arial", 14, 'underline'))
+        model_parameters_label.grid(row=8, column=0, columnspan=2, pady=(0, 5), sticky="W")
 
         # Input labels and entry fields
         self.inputs = [
@@ -147,23 +147,23 @@ class GUI:
         
         # Execute button at the bottom of input boxes
         self.execute_button = ctk.CTkButton(input_frame, text="Plot Tank Temperature", command=self.execute, width=150)
-        self.execute_button.grid(row=len(self.inputs) + 9, column=0, columnspan=1, pady=(10),sticky="EW")
+        self.execute_button.grid(row=len(self.inputs) + 9, column=0, columnspan=1, pady=(5),sticky="EW")
         
         # Heat Transfer Button button at the bottom of input boxes
         self.heat_button = ctk.CTkButton(input_frame, text="Plot Heat Transfer", command=self.heat, width=150)
-        self.heat_button.grid(row=len(self.inputs) + 10, column=0, columnspan=1, pady=(10),sticky="EW")
+        self.heat_button.grid(row=len(self.inputs) + 10, column=0, columnspan=1, pady=(5),sticky="EW")
         
         # Clear Figure button
         self.clear_button = ctk.CTkButton(input_frame, text="Clear Figure", command=self.clear_figure, width=150)
-        self.clear_button.grid(row=len(self.inputs) + 9, column=1, columnspan=1, pady=(10),sticky="EW")
+        self.clear_button.grid(row=len(self.inputs) + 9, column=1, columnspan=1, pady=(5),sticky="EW")
 
         # # Reset Inputs button
         self.reset_button = ctk.CTkButton(input_frame, text="Reset Inputs", command=self.reset_inputs, width=150)
-        self.reset_button.grid(row=len(self.inputs) + 10, column=1, columnspan=1, pady=(10),sticky="EW")
+        self.reset_button.grid(row=len(self.inputs) + 10, column=1, columnspan=1, pady=(5),sticky="EW")
 
         # Create matplotlib figure on the right
         figure_frame = ctk.CTkFrame(self.root)
-        figure_frame.pack(side="right", fill="both", expand=True, padx=10, pady=20)
+        figure_frame.pack(side="right", fill="both", expand=True, padx=10, pady=5)
         
         # Set the figure size
         self.fig = Figure(figsize=(10.67, 8), dpi=100)
