@@ -11,25 +11,25 @@ new_build_house:
     value: 145
 larch_Lecture_theatre:
   floor_area:
-    value : 150
+    value: 150
   roof_area:
-    value : 150
+    value: 150
   wall_area:
-    value : 250
+    value: 250
   wall_U_value:
-    value : 0.25
+    value: 0.25
   roof_U_value:
-    value : 0.18
+    value: 0.18
 warehouse:
   floor_area:
-    value : 31000
+    value: 31000
   roof_area:
-    value : 31000
+    value: 31000
   wall_area:
-    value : 7100
+    value: 7100
   wall_U_value:
-    value : 0.4
+    value: 0.4
   roof_U_value:
-    value : 0.4
+    value: 0.4
 
   
