@@ -1,4 +1,3 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 import requests
@@ -46,9 +45,9 @@ outdoor_temp_values = [entry['outdoor_temp_C'] for entry in data_cop['heat_pump_
 
 #Define three building types with varying characteristics
 buildings = [
-    {"name": "Default Building", "indoor_temp": 293.15, "roof_U": 0.18, "wall_U": 0.51, "roof_area": 120, "wall_area": 132},
-    {"name": "Well-Insulated Large Building", "indoor_temp": 295.15, "roof_U": 0.1, "wall_U": 0.3, "roof_area": 200, "wall_area": 250},
-    {"name": "Poorly Insulated Small Building", "indoor_temp": 290.15, "roof_U": 0.3, "wall_U": 0.7, "roof_area": 80, "wall_area": 100}
+    {"name": "New build House", "indoor_temp": 293.15, "roof_U": 0.16, "wall_U": 0.3, "roof_area": 60, "wall_area": 145},
+    {"name": "Larch Lecture", "indoor_temp": 295.15, "roof_U": 0.18, "wall_U": 0.25, "roof_area": 150, "wall_area": 250},
+    {"name": "Warehouse", "indoor_temp": 290.15, "roof_U": 0.4, "wall_U": 0.4, "roof_area": 31000, "wall_area": 7100}
 ]
 
 # Extract fixed values from inputs.yaml
@@ -121,8 +120,9 @@ for building in buildings:
 
 # Plot comparison of Q_Load vs Ambient Temperature for Large and Small Buildings
 plt.figure(figsize=(10, 6))
-plt.plot(t_ambient, q_load_data["Well-Insulated Large Building"], label="Well-Insulated Large Building", color="blue")
-plt.plot(t_ambient, q_load_data["Poorly Insulated Small Building"], label="Poorly Insulated Small Building", color="red")
+plt.plot(t_ambient, q_load_data["New build House"], label="New build House", color="blue")
+plt.plot(t_ambient, q_load_data["Warehouse"], label="Warehouse", color="red")
+plt.plot(t_ambient, q_load_data["Larch Lecture"], label="Larch Lecture", color="green")
 plt.title("Q_Load vs Ambient Temperature for Large and Small Buildings")
 plt.xlabel("Ambient Temperature (K)")
 plt.ylabel("Q_Load (W)")
