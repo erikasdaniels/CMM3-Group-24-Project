@@ -1,9 +1,17 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Nov 13 11:20:13 2024
+
+@author: erika
+"""
+
 from datetime import datetime
 from meteostat import Point, Hourly
 import numpy as np
 import yaml
 import matplotlib.pyplot as plt
 import requests
+
 
 
 # Define the location (Edinburgh: 55.9533° N, 3.1883° W)
@@ -187,7 +195,8 @@ STEP 5 BEGINS HERE
 k = 1/2 
 density_water = 997 #kg/m^3
 V_water = mass_of_water/density_water
-tank_surface_area = 2*((V_water)**(2/3))*math.pi**(1/3)*(k**(1/3)+k**(2/3))
+tank_surface_area = 2*((V_water)**(2/3))*np.pi**(1/3)*(k**(1/3)+k**(2/3))
+
 
 
 # Initialize the Heat transfer, load and loss lists
@@ -282,8 +291,8 @@ plt.plot(time_hours, T_tank_solution, label='Tank Temperature (K)')
 plt.xlabel('Time (hours)')
 plt.ylabel('Tank Temperature (K)')
 plt.title('Tank Temperature Over Time')
-plt.axhline(333.15, color="red", label="Off Temperature Threshold")
-plt.axhline(313.15, color="green", label="On Temperature Threshold")
+plt.axhline(333.15, color="red", linestyle = '--',  label="Off Temperature Threshold")
+plt.axhline(313.15, color="green",linestyle = '--', label="On Temperature Threshold")
 plt.scatter(min_time / 3600, min_temp, color='orange', zorder=5)
 plt.scatter(max_time / 3600, max_temp, color='purple', zorder=5)
 plt.xlim(0, 24)
@@ -360,6 +369,8 @@ system_efficiency = (total_useful_energy_kwh / total_energy_kwh) * 100  # Effici
 
 print()
 print("---PERFORMANCE METRICS---")
+print(f'The optimised tank surface area is: {tank_surface_area:.2f} m^2 ')
+print()
 print(f'Minimum Temperature: {min_temp:.2f} K at {min_hours:02}:{min_minutes:02}')
 print(f'Maximum Temperature: {max_temp:.2f} K at {max_hours:02}:{max_minutes:02}')
 print()
@@ -371,5 +382,4 @@ print(f"Heat pump maximum thermal output: {max_thermal_output:.2f} W")
 print()
 print(f"Average COP over 24 hours: {average_cop:.2f}")
 print(f"Maximum COP: {max_cop:.2f}, Minimum COP: {min_cop:.2f} ")
-
 
