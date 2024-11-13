@@ -44,9 +44,9 @@ class GUI:
         
         self.root.title("Task B - User Interface - Group 24")
 
-        # Title label
-        self.label = ctk.CTkLabel(self.root, text='Heat Pump Model - Group 24', font=("Arial", 48, 'underline'))
-        self.label.pack(pady=(20, 20))
+        # # Title label
+        # self.label = ctk.CTkLabel(self.root, text='Heat Pump Model - Group 24', font=("Arial", 48, 'underline'))
+        # self.label.pack(pady=(20, 20))
 
         # Frame for input boxes on the left
         input_frame = ctk.CTkFrame(self.root)
@@ -147,19 +147,19 @@ class GUI:
         
         # Execute button at the bottom of input boxes
         self.execute_button = ctk.CTkButton(input_frame, text="Plot Tank Temperature", command=self.execute, width=150)
-        self.execute_button.grid(row=len(self.inputs) + 9, column=0, columnspan=2, pady=(20,10))
+        self.execute_button.grid(row=len(self.inputs) + 9, column=0, columnspan=1, pady=(10),sticky="EW")
         
         # Heat Transfer Button button at the bottom of input boxes
         self.heat_button = ctk.CTkButton(input_frame, text="Plot Heat Transfer", command=self.heat, width=150)
-        self.heat_button.grid(row=len(self.inputs) + 10, column=0, columnspan=2, pady=(10))
+        self.heat_button.grid(row=len(self.inputs) + 10, column=0, columnspan=1, pady=(10),sticky="EW")
         
         # Clear Figure button
         self.clear_button = ctk.CTkButton(input_frame, text="Clear Figure", command=self.clear_figure, width=150)
-        self.clear_button.grid(row=len(self.inputs) + 11, column=0, columnspan=2, pady=(10))
+        self.clear_button.grid(row=len(self.inputs) + 9, column=1, columnspan=1, pady=(10),sticky="EW")
 
         # # Reset Inputs button
         self.reset_button = ctk.CTkButton(input_frame, text="Reset Inputs", command=self.reset_inputs, width=150)
-        self.reset_button.grid(row=len(self.inputs) + 12, column=0, columnspan=2, pady=(10))
+        self.reset_button.grid(row=len(self.inputs) + 10, column=1, columnspan=1, pady=(10),sticky="EW")
 
         # Create matplotlib figure on the right
         figure_frame = ctk.CTkFrame(self.root)
