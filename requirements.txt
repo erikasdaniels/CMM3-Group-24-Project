@@ -2,3 +2,7 @@ numpy
 scipy
 matplotlib
 meteostat
+customtkinter
+matplotlib
+requests
+pyyaml
