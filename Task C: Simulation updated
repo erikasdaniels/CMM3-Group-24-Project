@@ -385,7 +385,7 @@ import matplotlib.pyplot as plt
 buildings = [
     {"name": "New Build House", "indoor_temp": 293.15, "roof_U": 0.16, "wall_U": 0.3, "roof_area": 60, "wall_area": 145},
     {"name": "Larch Lecture", "indoor_temp": 295.15, "roof_U": 0.18, "wall_U": 0.25, "roof_area": 150, "wall_area": 250},
-    {"name": "Warehouse", "indoor_temp": 290.15, "roof_U": 0.4, "wall_U": 0.4, "roof_area": 31000, "wall_area": 7100},
+    {"name": "Warehouse", "indoor_temp": 293.15, "roof_U": 0.5, "wall_U": 0.4, "roof_area": 310, "wall_area": 710},
 ]
 
 # Define simulation results storage
