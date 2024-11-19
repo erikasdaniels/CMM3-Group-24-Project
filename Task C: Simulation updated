@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Nov 19 12:12:13 2024
+
+@author: erika
+"""
+
 from datetime import datetime
 from meteostat import Point, Hourly
 import numpy as np
@@ -184,12 +191,6 @@ def heat_pump(t_tank, heat_pump_status):
 STEP 5 BEGINS HERE 
 -----------------------------------------------------------------------------------------------------------------------------------
 '''
-#calcualting SA from ratio of radius to height
-k = 1/2 
-density_water = 997 #kg/m^3
-V_water = mass_of_water/density_water
-tank_surface_area = 2*((V_water)**(2/3))*np.pi**(1/3)*(k**(1/3)+k**(2/3))
-
 
 
 # Initialize the Heat transfer, load and loss lists
@@ -364,7 +365,7 @@ system_efficiency = (total_useful_energy_kwh / total_energy_kwh) * 100  # Effici
 
 print()
 print("---PERFORMANCE METRICS---")
-print(f'The optimised tank surface area is: {tank_surface_area:.2f} m^2 ')
+
 print()
 print(f'Minimum Temperature: {min_temp:.2f} K at {min_hours:02}:{min_minutes:02}')
 print(f'Maximum Temperature: {max_temp:.2f} K at {max_hours:02}:{max_minutes:02}')
@@ -383,9 +384,9 @@ import matplotlib.pyplot as plt
 
 # Building data
 buildings = [
-    {"name": "New Build House", "indoor_temp": 293.15, "roof_U": 0.16, "wall_U": 0.3, "roof_area": 60, "wall_area": 145},
-    {"name": "Larch Lecture", "indoor_temp": 295.15, "roof_U": 0.18, "wall_U": 0.25, "roof_area": 150, "wall_area": 250},
-    {"name": "Warehouse", "indoor_temp": 293.15, "roof_U": 0.5, "wall_U": 0.4, "roof_area": 310, "wall_area": 710},
+    {"name": "New Build House", "indoor_temp": 293.15, "roof_U": 0.16, "wall_U": 0.3, "roof_area": 60, "wall_area": 145,"mass_of_water":200},
+    {"name": "Larch Lecture", "indoor_temp": 295.15, "roof_U": 0.18, "wall_U": 0.25, "roof_area": 150, "wall_area": 250, "mass_of_water":500},
+    {"name": "Warehouse", "indoor_temp": 293.15, "roof_U": 0.5, "wall_U": 0.4, "roof_area": 310, "wall_area": 710, "mass_of_water":1500},
 ]
 
 # Define simulation results storage
@@ -400,6 +401,7 @@ for building in buildings:
     roof_area = building["roof_area"]
     wall_U_value = building["wall_U"]
     wall_area = building["wall_area"]
+    mass_of_water = building["mass_of_water"]
 
     # Delta_T for ambient and indoor
     delta_t_ambient = [temp - indoor_setpoint_temperature for temp in t_ambient]
@@ -410,8 +412,12 @@ for building in buildings:
     # Constants for the simulation
     time_step = total_time / n_steps
 
-    # Tank parameters
-    tank_surface_area = 2 * ((V_water) ** (2 / 3)) * np.pi ** (1 / 3) * (k ** (1 / 3) + k ** (2 / 3))
+    #calcualting SA from ratio of radius to height
+    k = 1/2 
+    density_water = 997 #kg/m^3
+    V_water = mass_of_water/density_water
+    tank_surface_area = 2*((V_water)**(2/3))*np.pi**(1/3)*(k**(1/3)+k**(2/3))
+
 
     # Initialize heat pump status
     heat_pump_status = [False]
@@ -479,6 +485,7 @@ for building in buildings:
 
     # Print results for current building
     print(f"Total energy usage by heat pump: {total_energy_kwh:.2f} kWh")
+    print(f'The optimised tank surface area is: {tank_surface_area:.2f} m^2 ')
     print(f"Total useful thermal energy provided: {total_useful_energy_kwh:.2f} kWh")
     print(f"System efficiency: {system_efficiency:.2f}%")
     print(f"Maximum thermal output of heat pump: {max_thermal_output:.2f} W")
@@ -538,4 +545,3 @@ plt.title("Average COP Comparison")
 plt.legend()
 plt.grid(True)
 plt.show()
-
