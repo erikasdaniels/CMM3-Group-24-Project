@@ -9,6 +9,8 @@ new_build_house:
     value: 0.16
   wall_area:
     value: 145
+  indoor_set_point_temp:
+    value: 293.15
 larch_Lecture_theatre:
   floor_area:
     value: 150
@@ -20,16 +22,21 @@ larch_Lecture_theatre:
     value: 0.25
   roof_U_value:
     value: 0.18
+  indoor_set_point_temp:
+    value: 295.15
 warehouse:
   floor_area:
-    value: 31000
+    value: 310
   roof_area:
-    value: 31000
+    value: 310
   wall_area:
-    value: 7100
+    value: 710
   wall_U_value:
     value: 0.4
   roof_U_value:
     value: 0.4
+  indoor_set_point_temp:
+    value: 293.15
+
 
   
